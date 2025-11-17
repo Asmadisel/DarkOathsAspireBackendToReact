@@ -1,20 +1,20 @@
+// AppHost/AppHost.cs
+using Aspire.Hosting;
+
 var builder = DistributedApplication.CreateBuilder(args);
 
 var postgres = builder.AddPostgres("postgresdb")
-                      .WithPgAdmin();
+    .WithPgAdmin();
 
-var cache = builder.AddRedis("cache");
+var redis = builder.AddRedis("redis");
 
-var apiService = builder.AddProject<Projects.DarkOathsAspireBackendToReact_ApiService>("apiservice")
-    .WithHttpHealthCheck("/health")
-                        .WithReference(postgres);
+// Aspire теперь будет ждать полной готовности PostgreSQL
+builder.AddProject<Projects.DarkOathsAspireBackendToReact_ApiService>("apiservice")
+    .WithReference(postgres)
+    .WithReference(redis)
+    .WaitFor(postgres);
 
 builder.AddProject<Projects.DarkOathsAspireBackendToReact_Web>("webfrontend")
-    .WithExternalHttpEndpoints()
-    .WithHttpHealthCheck("/health")
-    .WithReference(cache)
-    .WaitFor(cache)
-    .WithReference(apiService)
-    .WaitFor(apiService);
+    .WithReference(redis);
 
 builder.Build().Run();

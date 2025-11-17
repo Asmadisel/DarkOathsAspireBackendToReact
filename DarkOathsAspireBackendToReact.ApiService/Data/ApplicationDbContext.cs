@@ -19,7 +19,7 @@ namespace DarkOathsAspireBackendToReact.ApiService.Data
             // Заполняем таблицу Users начальными данными
             modelBuilder.Entity<User>().HasData(new User
             {
-                Id = 1,
+                Id =  new Guid("12345678-1234-1234-1234-123456789012"),
                 Email = "admin@example.com",
                 Login = "Admin",
                 // НИКОГДА не храните пароли в открытом виде в коде или миграциях!

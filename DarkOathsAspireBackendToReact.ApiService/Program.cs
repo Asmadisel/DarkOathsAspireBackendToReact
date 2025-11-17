@@ -1,72 +1,49 @@
-﻿using DarkOathsAspireBackendToReact.ApiService.Data;
+﻿// ApiService/Program.cs
+using DarkOathsAspireBackendToReact.ApiService;
+using DarkOathsAspireBackendToReact.ApiService.Data;
+using DarkOathsAspireBackendToReact.ApiService.Endpoints;
 using DarkOathsAspireBackendToReact.ApiService.Models;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-
 builder.AddServiceDefaults();
 
-string? connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-if (string.IsNullOrEmpty(connectionString))
+builder.Services.AddKeyedSingleton<IConnectionMultiplexer>("redis", (sp, key) =>
 {
-    throw new InvalidOperationException("Строка подключения 'postgres' не найдена.");
-}
+    var config = sp.GetRequiredService<IConfiguration>();
+    var connectionString = config.GetConnectionString(key.ToString()!);
+    return ConnectionMultiplexer.Connect(connectionString!);
+});
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var connectionString = config.GetConnectionString("postgresdb");
+    options.UseNpgsql(connectionString);
+});
 
-// 1. Добавляем генератор OpenAPI-документов (Swashbuckle)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    context.Database.Migrate(); // <-- Эта строка и делает "update-database"
-}
+// === КРИТИЧЕСКИ ВАЖНЫЙ БЛОК ===
+// Применяем миграции СИНХРОННО и ОБЯЗАТЕЛЬНО до app.Run()
+var dbContext = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+dbContext.Database.Migrate(); 
+// =============================
 
-// 2. Подключаем middleware для отображения документации
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();                 // Служит JSON-документ
-    app.UseSwaggerUI();               // Служит UI-интерфейс (Swagger UI)
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
-// Ваши endpoint'ы
-app.MapGet("/weatherforecast", () => "Hello World!")
-   .WithName("GetWeatherForecast");
+app.MapAuthEndpoints();
+app.MapUsersEndpoints();
 
-// Endpoint для Aspire
 app.MapDefaultEndpoints();
-
-app.MapPost("/api/auth/login", async (LoginRequest request, ApplicationDbContext dbContext) =>
-{
-    var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Login == request.Login);
-    if (user == null)
-    {
-        // Возвращаем 401, если пользователь не найден (не раскрываем, что именно не так)
-        return Results.Unauthorized();
-    }
-
-    if (user.PasswordHash != request.Password) 
-    {
-        return Results.Unauthorized();
-    }
-
-    // Если всё хорошо, возвращаем успешный ответ.
-    // В реальности здесь нужно создать и вернуть JWT-токен.
-    return Results.Ok(new { Message = "Login successful", UserId = user.Id });
-});
-
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    dbContext.Database.Migrate();
-}
 
 app.Run();
