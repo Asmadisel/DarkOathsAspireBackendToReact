@@ -10,6 +10,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // Адрес вашего React-приложения
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddKeyedSingleton<IConnectionMultiplexer>("redis", (sp, key) =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
@@ -40,6 +50,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors("AllowReactApp");
 
 app.MapAuthEndpoints();
 app.MapUsersEndpoints();

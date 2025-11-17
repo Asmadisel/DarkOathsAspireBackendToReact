@@ -1,7 +1,9 @@
 ﻿// ApiService/Endpoints/UsersEndpoints.cs
 using DarkOathsAspireBackendToReact.ApiService.Data;
 using DarkOathsAspireBackendToReact.ApiService.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 
 namespace DarkOathsAspireBackendToReact.ApiService.Endpoints;
 
@@ -27,12 +29,73 @@ public static class UsersEndpoints
                 // TODO: В продакшене используйте хеширование (например, BCrypt)!
                 PasswordHash = request.Password,
                 Email = request.Email,
+                CreatedAt = DateTime.UtcNow,
             };
 
             dbContext.Users.Add(newUser);
             await dbContext.SaveChangesAsync();
 
             return Results.Created($"/api/users/{newUser.Id}", new { Id = newUser.Id, Login = newUser.Login, Email = newUser.Email });
+        });
+
+        // НОВЫЙ ЭНДПОИНТ: Получение списка пользователей (требует аутентификации)
+        group.MapGet("/", async (
+             [FromQuery] int page,
+             [FromQuery] int pageSize,
+             ApplicationDbContext dbContext,
+             [FromKeyedServices("redis")] IConnectionMultiplexer redis,
+             [FromHeader(Name = "Authorization")] string? authorization 
+         ) =>
+        {
+            // --- ШАГ 1: Проверка аутентификации ---
+            // Устанавливаем значения по умолчанию ПОСЛЕ проверки аутентификации
+            page = page == 0 ? 1 : page;
+            pageSize = pageSize == 0 ? 10 : pageSize;
+
+            if (string.IsNullOrEmpty(authorization) || !authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                return Results.Json(
+                     new { error = "Access to this resource is forbidden." },
+                     statusCode: 403 // <-- Используем 403
+                 );
+            }
+
+            var sessionId = authorization["Bearer ".Length..].Trim();
+            var redisDb = redis.GetDatabase();
+            var userIdFromSession = await redisDb.StringGetAsync($"session:{sessionId}");
+
+            if (userIdFromSession.IsNullOrEmpty)
+            {
+                return Results.Json(
+                    new { error = "Access to this resource is forbidden." },
+                    statusCode: 403 // <-- Используем 403
+                );
+            }
+            // --- Конец проверки аутентификации ---
+
+            // --- ШАГ 2: Пагинация ---
+            const int MaxPageSize = 50;
+            pageSize = Math.Min(pageSize, MaxPageSize);
+            var skip = (page - 1) * pageSize;
+
+            // Запрашиваем пользователей из БД
+            var users = await dbContext.Users
+                .OrderBy(u => u.Id)
+                .Skip(skip)
+                .Take(pageSize)
+                .Select(u => new { u.Id, u.Login, u.Email, u.CreatedAt })
+                .ToListAsync();
+
+            var totalCount = await dbContext.Users.CountAsync();
+
+            return Results.Ok(new
+            {
+                Users = users,
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+            });
         });
     }
 }

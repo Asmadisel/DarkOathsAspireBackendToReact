@@ -24,7 +24,8 @@ namespace DarkOathsAspireBackendToReact.ApiService.Data
                 Login = "Admin",
                 // НИКОГДА не храните пароли в открытом виде в коде или миграциях!
                 // Для примера используем простой текст, но в реальном приложении это должен быть хэш.
-                PasswordHash = "admin" // <-- Это временно! Замените на хэш в продакшене.
+                PasswordHash = "admin", // <-- Это временно! Замените на хэш в продакшене.
+                CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
         }
     }

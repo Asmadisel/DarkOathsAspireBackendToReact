@@ -3,6 +3,7 @@ using System;
 using DarkOathsAspireBackendToReact.ApiService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DarkOathsAspireBackendToReact.ApiService.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251117214152_AddCreatedAtToUser")]
+    partial class AddCreatedAtToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,7 +54,7 @@ namespace DarkOathsAspireBackendToReact.ApiService.Migrations
                         new
                         {
                             Id = new Guid("12345678-1234-1234-1234-123456789012"),
-                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2025, 11, 17, 21, 41, 52, 189, DateTimeKind.Utc).AddTicks(3595),
                             Email = "admin@example.com",
                             Login = "Admin",
                             PasswordHash = "admin"
