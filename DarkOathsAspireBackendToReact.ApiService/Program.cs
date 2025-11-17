@@ -1,4 +1,5 @@
 ﻿using DarkOathsAspireBackendToReact.ApiService.Data;
+using DarkOathsAspireBackendToReact.ApiService.Models;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,7 +12,7 @@ string? connectionString = builder.Configuration.GetConnectionString("DefaultCon
 
 if (string.IsNullOrEmpty(connectionString))
 {
-    throw new InvalidOperationException("Строка подключения 'postgresdb' не найдена.");
+    throw new InvalidOperationException("Строка подключения 'postgres' не найдена.");
 }
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -42,6 +43,25 @@ app.MapGet("/weatherforecast", () => "Hello World!")
 
 // Endpoint для Aspire
 app.MapDefaultEndpoints();
+
+app.MapPost("/api/auth/login", async (LoginRequest request, ApplicationDbContext dbContext) =>
+{
+    var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Login == request.Login);
+    if (user == null)
+    {
+        // Возвращаем 401, если пользователь не найден (не раскрываем, что именно не так)
+        return Results.Unauthorized();
+    }
+
+    if (user.PasswordHash != request.Password) 
+    {
+        return Results.Unauthorized();
+    }
+
+    // Если всё хорошо, возвращаем успешный ответ.
+    // В реальности здесь нужно создать и вернуть JWT-токен.
+    return Results.Ok(new { Message = "Login successful", UserId = user.Id });
+});
 
 using (var scope = app.Services.CreateScope())
 {
