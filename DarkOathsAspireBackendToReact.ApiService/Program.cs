@@ -1,61 +1,50 @@
-﻿// ApiService/Program.cs
-using DarkOathsAspireBackendToReact.ApiService;
-using DarkOathsAspireBackendToReact.ApiService.Data;
+﻿using DarkOathsAspireBackendToReact.ApiService.Data;
 using DarkOathsAspireBackendToReact.ApiService.Endpoints;
-using DarkOathsAspireBackendToReact.ApiService.Models;
+using Grpc.Core;
 using Microsoft.EntityFrameworkCore;
-using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Интеграция с Aspire
 builder.AddServiceDefaults();
 
+// Настройка CORS для React-приложения
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // Адрес вашего React-приложения
+        policy.WithOrigins("http://localhost:3000")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
 
-builder.Services.AddKeyedSingleton<IConnectionMultiplexer>("redis", (sp, key) =>
-{
-    var config = sp.GetRequiredService<IConfiguration>();
-    var connectionString = config.GetConnectionString(key.ToString()!);
-    return ConnectionMultiplexer.Connect(connectionString!);
-});
-
+// Настройка подключения к БД (Aspire сам подставит строку подключения)
 builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
 {
-    var config = sp.GetRequiredService<IConfiguration>();
-    var connectionString = config.GetConnectionString("postgresdb");
+    var connectionString = sp.GetRequiredService<IConfiguration>()
+                             .GetConnectionString("apidb");
     options.UseNpgsql(connectionString);
 });
 
+// Настройка Swagger для разработки
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// === КРИТИЧЕСКИ ВАЖНЫЙ БЛОК ===
-// Применяем миграции СИНХРОННО и ОБЯЗАТЕЛЬНО до app.Run()
-var dbContext = app.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
-dbContext.Database.Migrate(); 
-// =============================
-
+// Middleware для разработки
 if (app.Environment.IsDevelopment())
 {
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await dbContext.Database.MigrateAsync();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
 app.UseCors("AllowReactApp");
-
-app.MapAuthEndpoints();
 app.MapUsersEndpoints();
-
 app.MapDefaultEndpoints();
 
 app.Run();

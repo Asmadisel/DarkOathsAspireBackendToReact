@@ -3,18 +3,24 @@ using Aspire.Hosting;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
-var postgres = builder.AddPostgres("postgresdb")
-    .WithPgAdmin();
+var authDb = builder.AddPostgres("authdb") // Р‘Р” РґР»СЏ AuthService
+    .WithPgAdmin(); // PgAdmin РїРѕРєР°Р¶РµС‚ РѕР±Рµ Р‘Р”
+
+var apiDb = builder.AddPostgres("apidb"); 
 
 var redis = builder.AddRedis("redis");
 
-// Aspire теперь будет ждать полной готовности PostgreSQL
+// Aspire С‚РµРїРµСЂСЊ Р±СѓРґРµС‚ Р¶РґР°С‚СЊ РїРѕР»РЅРѕР№ РіРѕС‚РѕРІРЅРѕСЃС‚Рё PostgreSQL
 builder.AddProject<Projects.DarkOathsAspireBackendToReact_ApiService>("apiservice")
-    .WithReference(postgres)
+    .WithReference(apiDb)
     .WithReference(redis)
-    .WaitFor(postgres);
+    .WaitFor(apiDb);
 
 builder.AddProject<Projects.DarkOathsAspireBackendToReact_Web>("webfrontend")
     .WithReference(redis);
+
+builder.AddProject<Projects.DarkOathsAspireBackendToReact_AuthService>("authservice")
+    .WithReference(authDb)
+    .WaitFor(authDb);
 
 builder.Build().Run();
