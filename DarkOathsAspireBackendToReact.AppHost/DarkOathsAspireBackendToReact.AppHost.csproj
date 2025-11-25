@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DarkOathsAspireBackendToReact.ApiService\DarkOathsAspireBackendToReact.ApiService.csproj" />
+    <ProjectReference Include="..\DarkOathsAspireBackendToReact.AuthService\DarkOathsAspireBackendToReact.AuthService.csproj" />
     <ProjectReference Include="..\DarkOathsAspireBackendToReact.Web\DarkOathsAspireBackendToReact.Web.csproj" />
   </ItemGroup>
 

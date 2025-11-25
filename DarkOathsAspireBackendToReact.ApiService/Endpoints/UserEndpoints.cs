@@ -40,8 +40,8 @@ public static class UsersEndpoints
 
         // НОВЫЙ ЭНДПОИНТ: Получение списка пользователей (требует аутентификации)
         group.MapGet("/", async (
-             [FromQuery] int page,
-             [FromQuery] int pageSize,
+             [FromQuery] int? page,
+             [FromQuery] int? pageSize,
              ApplicationDbContext dbContext,
              [FromKeyedServices("redis")] IConnectionMultiplexer redis,
              [FromHeader(Name = "Authorization")] string? authorization 
@@ -49,8 +49,8 @@ public static class UsersEndpoints
         {
             // --- ШАГ 1: Проверка аутентификации ---
             // Устанавливаем значения по умолчанию ПОСЛЕ проверки аутентификации
-            page = page == 0 ? 1 : page;
-            pageSize = pageSize == 0 ? 10 : pageSize;
+            var currentPage = page ?? 1;
+            var currentPageSize = pageSize ?? 10;
 
             if (string.IsNullOrEmpty(authorization) || !authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
             {
@@ -75,14 +75,14 @@ public static class UsersEndpoints
 
             // --- ШАГ 2: Пагинация ---
             const int MaxPageSize = 50;
-            pageSize = Math.Min(pageSize, MaxPageSize);
-            var skip = (page - 1) * pageSize;
+            currentPageSize = Math.Min(currentPageSize, MaxPageSize);
+            var skip = (currentPage - 1) * currentPageSize;
 
             // Запрашиваем пользователей из БД
             var users = await dbContext.Users
                 .OrderBy(u => u.Id)
                 .Skip(skip)
-                .Take(pageSize)
+                .Take(currentPageSize)
                 .Select(u => new { u.Id, u.Login, u.Email, u.CreatedAt })
                 .ToListAsync();
 
@@ -94,7 +94,7 @@ public static class UsersEndpoints
                 Page = page,
                 PageSize = pageSize,
                 TotalCount = totalCount,
-                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+                TotalPages = (int)Math.Ceiling((double)totalCount / currentPageSize)
             });
         });
     }
