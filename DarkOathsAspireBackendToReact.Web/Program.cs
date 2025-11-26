@@ -46,4 +46,6 @@ app.MapControllers();
 
 app.MapDefaultEndpoints();
 
+app.MapFallbackToFile("index.html");
+
 app.Run();

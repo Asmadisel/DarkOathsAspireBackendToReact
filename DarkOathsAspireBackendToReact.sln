@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Элементы решен
 		global.json = global.json
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VkDarkOathsBot", "VkDarkOathsBot\VkDarkOathsBot.csproj", "{21655B9F-F609-0746-2049-E6C44BD187C4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -88,6 +90,18 @@ Global
 		{E76BFB8F-417D-A5E1-A5A6-ACAE8054FA63}.Release|x64.Build.0 = Release|Any CPU
 		{E76BFB8F-417D-A5E1-A5A6-ACAE8054FA63}.Release|x86.ActiveCfg = Release|Any CPU
 		{E76BFB8F-417D-A5E1-A5A6-ACAE8054FA63}.Release|x86.Build.0 = Release|Any CPU
+		{21655B9F-F609-0746-2049-E6C44BD187C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21655B9F-F609-0746-2049-E6C44BD187C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21655B9F-F609-0746-2049-E6C44BD187C4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{21655B9F-F609-0746-2049-E6C44BD187C4}.Debug|x64.Build.0 = Debug|Any CPU
+		{21655B9F-F609-0746-2049-E6C44BD187C4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{21655B9F-F609-0746-2049-E6C44BD187C4}.Debug|x86.Build.0 = Debug|Any CPU
+		{21655B9F-F609-0746-2049-E6C44BD187C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21655B9F-F609-0746-2049-E6C44BD187C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21655B9F-F609-0746-2049-E6C44BD187C4}.Release|x64.ActiveCfg = Release|Any CPU
+		{21655B9F-F609-0746-2049-E6C44BD187C4}.Release|x64.Build.0 = Release|Any CPU
+		{21655B9F-F609-0746-2049-E6C44BD187C4}.Release|x86.ActiveCfg = Release|Any CPU
+		{21655B9F-F609-0746-2049-E6C44BD187C4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

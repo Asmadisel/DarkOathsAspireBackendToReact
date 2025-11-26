@@ -1,0 +1,6 @@
+@VkDarkOathsBot_HostAddress = http://localhost:5017
+
+GET {{VkDarkOathsBot_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

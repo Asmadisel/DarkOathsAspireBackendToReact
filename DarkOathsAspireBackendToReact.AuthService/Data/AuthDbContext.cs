@@ -14,6 +14,7 @@ namespace DarkOathsAspireBackendToReact.AuthService.Data
         {
             modelBuilder.Entity<AuthUser>(entity =>
             {
+                entity.ToTable("Users");
                 entity.HasIndex(e => e.Email).IsUnique();
             });
 
@@ -24,7 +25,7 @@ namespace DarkOathsAspireBackendToReact.AuthService.Data
 
             var userRole = new AuthRole { Id = RolesConstants.User, Name = "User" };
             var adminRole = new AuthRole { Id = RolesConstants.Admin, Name = "Admin" };
-            modelBuilder.Entity<AuthRole>().HasData(userRole, adminRole);
+            modelBuilder.Entity<AuthRole>().ToTable("Roles").HasData(userRole, adminRole);
 
             // === ДОБАВЛЕНИЕ АДМИН-ПОЛЬЗОВАТЕЛЯ ===
             modelBuilder.Entity<AuthUser>().HasData(new AuthUser
