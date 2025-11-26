@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DarkOathsAspireBackendToReact.AuthService.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20251124224741_InitialCreate")]
+    [Migration("20251126165834_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -37,7 +37,7 @@ namespace DarkOathsAspireBackendToReact.AuthService.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Roles");
+                    b.ToTable("Roles", (string)null);
 
                     b.HasData(
                         new
@@ -86,7 +86,7 @@ namespace DarkOathsAspireBackendToReact.AuthService.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
 
                     b.HasData(
                         new
