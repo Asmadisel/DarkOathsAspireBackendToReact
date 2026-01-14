@@ -16,12 +16,15 @@ var apiService = builder.AddProject<Projects.DarkOathsAspireBackendToReact_ApiSe
     .WithReference(redis)
     .WaitFor(apiDb);
 
-builder.AddProject<Projects.DarkOathsAspireBackendToReact_Web>("webfrontend")
-    .WithReference(redis);
 
 var authService = builder.AddProject<Projects.DarkOathsAspireBackendToReact_AuthService>("authservice")
     .WithReference(authDb)
     .WaitFor(authDb);
+
+builder.AddProject<Projects.DarkOathsAspireBackendToReact_Web>("webfrontend")
+    .WithReference(redis)
+    .WithReference(apiService)
+    .WithReference(authService) ;
 
 var vkBotMigrations = builder.AddProject<Projects.VkDarkOathsBot>("vkbot-migrations")
     .WithReference(authDb)

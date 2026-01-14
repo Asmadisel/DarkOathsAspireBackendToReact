@@ -1,51 +1,66 @@
-using DarkOathsAspireBackendToReact.Web;
-using DarkOathsAspireBackendToReact.Web.Components;
-using Microsoft.AspNetCore.Mvc;
+﻿using DarkOathsAspireBackendToReact.Web.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add service defaults & Aspire client integrations.
+// Add service defaults & Aspire client integrations
 builder.AddServiceDefaults();
-builder.AddRedisOutputCache("cache");
 
-// Add services to the container.
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+// ✅ ДОБАВИТЬ Antiforgery сервисы (это обязательно)
+builder.Services.AddAntiforgery();
 
+// CORS для React dev server
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactDev",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:3000")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
+
+// ✅ Добавить только контроллеры (Blazor не нужен для React)
 builder.Services.AddControllers();
 
-builder.Services.AddEndpointsApiExplorer();
+// HttpClient для сервисов
+builder.Services.AddHttpClient("AuthService", client =>
+{
+    client.BaseAddress = new("https+http://authservice");
+});
 
-builder.Services.AddHttpClient<WeatherApiClient>(client =>
-    {
-        // This URL uses "https+http://" to indicate HTTPS is preferred over HTTP.
-        // Learn more about service discovery scheme resolution at https://aka.ms/dotnet/sdschemes.
-        client.BaseAddress = new("https+http://apiservice");
-    });
+builder.Services.AddHttpClient("ApiService", client =>
+{
+    client.BaseAddress = new("https+http://apiservice");
+});
 
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
 app.UseHttpsRedirection();
 
-app.UseStaticFiles();
+// ✅ ВАЖНО: Порядок middleware критичен!
+app.UseDefaultFiles(); // Для index.html
+app.UseStaticFiles();  // Для wwwroot
+
+// ✅ Теперь UseAntiforgery будет работать
 app.UseAntiforgery();
 
-app.UseOutputCache();
-
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("ReactDev");
+}
 
 app.MapControllers();
-
 app.MapDefaultEndpoints();
 
+// ✅ Fallback на React index.html
 app.MapFallbackToFile("index.html");
 
 app.Run();

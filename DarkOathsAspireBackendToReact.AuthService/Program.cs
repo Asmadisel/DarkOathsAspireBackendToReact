@@ -1,4 +1,4 @@
-using DarkOathsAspireBackendToReact.AuthService.Data;
+п»їusing DarkOathsAspireBackendToReact.AuthService.Data;
 using DarkOathsAspireBackendToReact.AuthService.Endpoints;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -19,21 +19,21 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 1. Регистрация авторизации
+// 1. Р РµРіРёСЃС‚СЂР°С†РёСЏ Р°РІС‚РѕСЂРёР·Р°С†РёРё
 builder.Services.AddAuthorization();
 builder.Services.AddAdminAuthorization();
 
-// 2. Настройка БД
+// 2. РќР°СЃС‚СЂРѕР№РєР° Р‘Р”
 builder.Services.AddDbContext<AuthDbContext>(options =>
 {
     var databaseConnection = builder.Configuration.GetConnectionString("authdb");
     options.UseNpgsql(databaseConnection);
 });
 
-// 3. КРИТИЧЕСКИ ВАЖНАЯ НАСТРОЙКА АУТЕНТИФИКАЦИИ
+// 3. РљР РРўРР§Р•РЎРљР Р’РђР–РќРђРЇ РќРђРЎРўР РћР™РљРђ РђРЈРўР•РќРўРР¤РРљРђР¦РР
 builder.Services.AddAuthentication(options =>
 {
-    // Схема по умолчанию — JWT для защищенных API
+    // РЎС…РµРјР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ вЂ” JWT РґР»СЏ Р·Р°С‰РёС‰РµРЅРЅС‹С… API
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
@@ -58,25 +58,34 @@ builder.Services.AddAuthentication(options =>
             ValidAudience = "DarkOathsApp",
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtKey))
         };
-        // === ЭТА СТРОКА КЛЮЧ К УСПЕХУ ===
-        // Если запрос не содержит Bearer-токена, не пытайся его аутентифицировать.
-        // Это позволяет другим схемам (GoogleCookies) работать в своих эндпоинтах.
+        // === Р­РўРђ РЎРўР РћРљРђ РљР›Р®Р§ Рљ РЈРЎРџР•РҐРЈ ===
+        // Р•СЃР»Рё Р·Р°РїСЂРѕСЃ РЅРµ СЃРѕРґРµСЂР¶РёС‚ Bearer-С‚РѕРєРµРЅР°, РЅРµ РїС‹С‚Р°Р№СЃСЏ РµРіРѕ Р°СѓС‚РµРЅС‚РёС„РёС†РёСЂРѕРІР°С‚СЊ.
+        // Р­С‚Рѕ РїРѕР·РІРѕР»СЏРµС‚ РґСЂСѓРіРёРј СЃС…РµРјР°Рј (GoogleCookies) СЂР°Р±РѕС‚Р°С‚СЊ РІ СЃРІРѕРёС… СЌРЅРґРїРѕРёРЅС‚Р°С….
         options.ForwardDefault = null;
     })
     .AddGoogle("Google", options =>
     {
         options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
         options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+
+        // вњ… Р’РђР–РќРћ: РЈРєР°Р¶РёС‚Рµ РўРћР§РќРћ С‚Р°РєРѕР№ Р¶Рµ redirect URI РєР°Рє РІ Google Console
+        options.CallbackPath = "/api/auth/google-callback";
+
+        // вњ… РЇРІРЅРѕ СѓРєР°Р·С‹РІР°РµРј redirect URI (РµСЃР»Рё РЅСѓР¶РЅРѕ)
+        // options.AccessType = "offline";
+        // options.Prompt = "consent";
+
         options.Scope.Add("openid");
         options.Scope.Add("email");
         options.Scope.Add("profile");
         options.SignInScheme = "GoogleCookies";
+        options.SaveTokens = true;
     });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-if (builder.Environment.IsDevelopment()) // Обратите внимание: builder.Environment, а не app.Environment
+if (builder.Environment.IsDevelopment()) // РћР±СЂР°С‚РёС‚Рµ РІРЅРёРјР°РЅРёРµ: builder.Environment, Р° РЅРµ app.Environment
 {
     builder.Services.Configure<CookiePolicyOptions>(options =>
     {
@@ -105,7 +114,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowReactApp");
 app.UseHttpsRedirection();
-app.UseAuthentication(); // <-- Должен быть перед UseAuthorization()
+app.UseAuthentication(); // <-- Р”РѕР»Р¶РµРЅ Р±С‹С‚СЊ РїРµСЂРµРґ UseAuthorization()
 app.UseAuthorization();
 app.MapUsersManagementEndpoints();
 app.MapGoogleAuthEndpoints();
@@ -114,13 +123,13 @@ app.MapDefaultEndpoints();
 
 app.Run();
 
-// Вспомогательный метод для корректной обработки SameSite
+// Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Р№ РјРµС‚РѕРґ РґР»СЏ РєРѕСЂСЂРµРєС‚РЅРѕР№ РѕР±СЂР°Р±РѕС‚РєРё SameSite
 static void SameSiteHandling(HttpContext httpContext, CookieOptions options)
 {
     if (options.SameSite == SameSiteMode.None)
     {
         var userAgent = httpContext.Request.Headers.UserAgent.ToString();
-        // Если браузер не поддерживает SameSite=None, меняем на Unspecified
+        // Р•СЃР»Рё Р±СЂР°СѓР·РµСЂ РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚ SameSite=None, РјРµРЅСЏРµРј РЅР° Unspecified
         if (DisallowsSameSiteNone(userAgent))
         {
             options.SameSite = SameSiteMode.Unspecified;
@@ -128,10 +137,10 @@ static void SameSiteHandling(HttpContext httpContext, CookieOptions options)
     }
 }
 
-// Простая проверка для старых браузеров (часто можно опустить)
+// РџСЂРѕСЃС‚Р°СЏ РїСЂРѕРІРµСЂРєР° РґР»СЏ СЃС‚Р°СЂС‹С… Р±СЂР°СѓР·РµСЂРѕРІ (С‡Р°СЃС‚Рѕ РјРѕР¶РЅРѕ РѕРїСѓСЃС‚РёС‚СЊ)
 static bool DisallowsSameSiteNone(string userAgent)
 {
-    // Упрощенная проверка
+    // РЈРїСЂРѕС‰РµРЅРЅР°СЏ РїСЂРѕРІРµСЂРєР°
     return userAgent.Contains("CPU iPhone OS 12") ||
            userAgent.Contains("iPad; CPU OS 12") ||
            (userAgent.Contains("Macintosh; Intel Mac OS X 10_14") &&
